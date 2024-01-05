@@ -5,27 +5,43 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Run the core of the bot
 func run(utils types.Utils, data types.Data) {
-	utils.Logger.Info("Running bot")
-
-	for _, update := range data.Updates {
+	// Loop over the updates
+	for update := range data.Updates {
+		//Log Update
 		utils.Logger.WithFields(logrus.Fields{
-			"update": update,
+			"updID":   update.UpdateID,
+			"updChat": update.FromChat().Title,
+			"updUser": update.SentFrom().UserName,
 		}).Debug("Update received")
 
-		if update.IsMessage() {
-			if update.IsCommand() {
-				utils.Logger.WithFields(logrus.Fields{
-					"command": update.Command(),
-				}).Debug("Command received")
+		// Check if the update is a callback query
+		if update.CallbackQuery != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"callback": update.CallbackQuery.Data,
+			}).Debug("CallbackQuery received")
 
-				switch update.Command() {
-				case "start":
-					utils.Logger.WithFields(logrus.Fields{
-						"chat": update.Message.Chat,
-					}).Debug("Start command received")
-				}
+			manageCallbackQueries(utils, data, update)
+			continue
+		}
+
+		// Check if the update is a message
+		if update.Message != nil {
+			// Log Message
+			utils.Logger.WithFields(logrus.Fields{
+				"msgFrom": update.Message.From.UserName,
+				"msgText": update.Message.Text,
+				"msgTime": update.Message.Time().Format(utils.TimeFormat),
+			}).Info("Message received")
+
+			// Check if the message is a command (and ignore other actions)
+			if update.Message.IsCommand() {
+				manageCommands(utils, data, update)
+				continue
 			}
+
+			manageMessages(utils, data, update)
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
 
 	"github.com/MoraGames/social_pub/config"
 	"github.com/MoraGames/social_pub/logger"
@@ -61,14 +60,6 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 180
 
-	//get current time location
-	timeLocation, err := time.LoadLocation("Local")
-	if err != nil {
-		l.WithFields(logrus.Fields{
-			"err": err,
-		}).Warn("Time location not get (using UTC)")
-	}
-
 	updates := bot.GetUpdatesChan(u)
 	l.WithFields(logrus.Fields{
 		"debugMode": bot.Debug,
@@ -89,7 +80,7 @@ func main() {
 	// Read from specified files and reload the data into the structs
 	ReloadStatus(
 		[]types.Reload{
-			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
+			{FileName: "files/users.json", DataStruct: &types.Users, IfOkay: nil, IfFail: nil},
 		},
 		utils,
 	)
